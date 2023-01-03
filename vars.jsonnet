@@ -13,11 +13,11 @@
 
   k3s: {
     enabled: true,
-    master_ip: ['192.168.50.208'],
+    master_ip: ['master_ip'],
   },
 
   // Domain suffix for the ingresses
-  suffixDomain: '192.168.50.208.nip.io',
+  suffixDomain: '<master_ip>.nip.io',
   // Additional domain suffixes for the ingresses.
   // For example suffixDomain could be an external one and this a local domain.
   additionalDomains: [],
@@ -55,7 +55,7 @@
   grafana: {
     // Grafana "from" email
     from_address: '',
-    root_url: 'http://speed-grafana.192.168.50.208.nip.io',
+    root_url: 'http://speed-grafana.<master_ip>.nip.io',
     // Plugins to be installed at runtime.
     //Ex. plugins: ['grafana-piechart-panel', 'grafana-clock-panel'],
     plugins: ['grafana-piechart-panel', 'grafana-clock-panel'],
