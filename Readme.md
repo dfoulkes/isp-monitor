@@ -61,7 +61,7 @@ To list the created ingresses, run `kubectl get ingress --all-namespaces`, if yo
 
 To avoid rebuilding all manifests, there is a make target to update the Ingress URL suffix to a different suffix. Run `make change_suffix suffix="[clusterURL]"` to change the ingress route IP for Grafana, Prometheus and Alertmanager and reapply the manifests.
 
-## Customizing
+## Customising
 
 The content of this project consists of a set of jsonnet files making up a library to be consumed.
 
