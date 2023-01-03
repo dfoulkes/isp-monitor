@@ -70,8 +70,8 @@ The content of this project consists of a set of jsonnet files making up a libra
 The project requires json-bundler and the jsonnet compiler. The Makefile does the heavy-lifting of installing them. You need [Go](https://golang.org/dl/) already installed:
 
 ```bash
-git clone https://github.com/carlosedp/cluster-monitoring
-cd cluster-monitoring
+git clone https://github.com/dfoulkes/isp-monitor
+cd isp-monitor
 make vendor
 # Change the jsonnet files...
 make
