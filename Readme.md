@@ -1,0 +1,158 @@
+# ISP Tracker
+
+## Assumption's
+
+ - K8s cluster is already setup and .kube/config file exists already. If you need a guide on setting up a bare metal cluster then please read [this blog post on configuring a pi cluster.](https://blog.foulkes.cloud/devops/picluster/setup/2022/12/18/configure-pi-cluster.html).
+
+## Setup Development Environment
+```
+sudo apt-get update
+sudo apt-get install golang-go
+go install -a github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@latest
+
+python3 -m venv ./env 
+python3 -m pip install -r requirements.txt
+#choose based on your shell. If your using a bash shell then no need for a file extension.
+source ./env/bin/activate.(fish/ps1/csh)
+cd jsonnet/    
+make
+cp jsonnet ../env/bin/
+```
+
+## Quickstart for K3s Setup
+
+To deploy the monitoring stack on your K3s cluster, there are four parameters that need to be configured in the  `vars.jsonnet` file:
+
+1. Set `k3s.enabled` to `true`.
+2. Change your K3s master node IP(your VM or host IP) on `k3s.master_ip` parameter.
+3. Edit `suffixDomain` to have your node IP with the `.nip.io` suffix or your cluster URL. This will be your ingress URL suffix.
+4. Set _traefikExporter_ `enabled` parameter to `true` to collect Traefik metrics and deploy dashboard.
+5. Edit grafana parameter `root_url` replacing the `master_ip` parameter.
+
+
+After changing these values to deploy the stack, run:
+
+```bash
+$ make vendor
+$ make
+$ make deploy
+
+# Or manually:
+
+$ make vendor
+$ make
+$ kubectl apply -f manifests/setup/
+$ kubectl apply -f manifests/
+```
+
+If you get an error from applying the manifests, run the `make deploy` or `kubectl apply -f manifests/` again. Sometimes the resources required to apply the CRDs are not deployed yet.
+
+## Ingress
+
+Now you can open the applications:
+
+To list the created ingresses, run `kubectl get ingress --all-namespaces`, if you added your cluster IP or URL suffix in `vars.jsonnet` before rebuilding the manifests, the applications will be exposed on:
+
+* Grafana on [https://grafana-speed.[your_node_ip].nip.io](https://grafana.[your_node_ip].nip.io), 
+* Prometheus on [https://prometheus-speed.[your_node_ip].nip.io](https://prometheus.[your_node_ip].nip.io) 
+
+
+## Updating the ingress suffixes
+
+To avoid rebuilding all manifests, there is a make target to update the Ingress URL suffix to a different suffix. Run `make change_suffix suffix="[clusterURL]"` to change the ingress route IP for Grafana, Prometheus and Alertmanager and reapply the manifests.
+
+## Customizing
+
+The content of this project consists of a set of jsonnet files making up a library to be consumed.
+
+### Pre-reqs
+
+The project requires json-bundler and the jsonnet compiler. The Makefile does the heavy-lifting of installing them. You need [Go](https://golang.org/dl/) already installed:
+
+```bash
+git clone https://github.com/carlosedp/cluster-monitoring
+cd cluster-monitoring
+make vendor
+# Change the jsonnet files...
+make
+```
+
+After this, a new customized set of manifests is built into the `manifests` dir. To apply to your cluster, run:
+
+```bash
+make deploy
+```
+
+To uninstall, run:
+
+```bash
+make teardown
+```
+
+## Images
+
+This project depends on the following images (all supports ARM, ARM64 and AMD64 thru manifests):
+
+**Blackbox_exporter**
+**Prometheus**
+
+* Source: https://github.com/carlosedp/prometheus-ARM
+* Autobuild: https://travis-ci.org/carlosedp/prometheus-ARM
+* Images:
+    * https://hub.docker.com/r/carlosedp/prometheus/
+
+**Prometheus-operator**
+
+* Source: https://github.com/carlosedp/prometheus-operator
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/prometheus-operator
+
+**Prometheus-adapter**
+
+* Source: https://github.com/DirectXMan12/k8s-prometheus-adapter
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/k8s-prometheus-adapter
+
+**Grafana**
+
+* Source: https://github.com/carlosedp/grafana-ARM
+* Autobuild: https://travis-ci.org/carlosedp/grafana-ARM
+* Images: https://hub.docker.com/r/grafana/grafana/
+
+**Kube-state-metrics**
+
+* Source: https://github.com/kubernetes/kube-state-metrics
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/kube-state-metrics
+
+**Addon-resizer**
+
+* Source: https://github.com/kubernetes/autoscaler/tree/master/addon-resizer
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/addon-resizer
+
+*Obs.* This image is a clone of [AMD64](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/addon-resizer-amd64), [ARM64](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/addon-resizer-arm64) and [ARM](https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/addon-resizer-arm64) with a manifest. It's cloned and generated by the `build_images.sh` script
+
+**configmap_reload**
+
+* Source: https://github.com/carlosedp/configmap-reload
+* Autobuild: https://travis-ci.org/carlosedp/configmap-reload
+* Images: https://hub.docker.com/r/carlosedp/configmap-reload
+
+**prometheus-config-reloader**
+
+* Source: https://github.com/coreos/prometheus-operator/tree/master/contrib/prometheus-config-reloader
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/prometheus-config-reloader
+
+
+**Kube-rbac-proxy**
+
+* Source: https://github.com/brancz/kube-rbac-proxy
+* Autobuild: No autobuild yet. Use provided `build_images.sh` script.
+* Images: https://hub.docker.com/r/carlosedp/kube-rbac-proxy
+
+
+# Acknowledgements
+
+Thanks to the work done by [@carlosedp](https://github.com/carlosedp). His work on [cluster monitor](https://github.com/carlosedp/cluster-monitoring) is the baseline of how this setup works.

@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-speed
+  namespace: speed-tester
+spec:
+  rules:
+  - host: prometheus-speed.192.168.50.208.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: prometheus-k8s
+            port:
+              name: web
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - prometheus-speed.192.168.50.208.nip.io

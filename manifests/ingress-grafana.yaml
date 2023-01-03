@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: speed-tester
+spec:
+  rules:
+  - host: grafana-speed.192.168.50.208.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: grafana
+            port:
+              name: http
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - grafana-speed.192.168.50.208.nip.io

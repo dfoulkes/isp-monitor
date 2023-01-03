@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  labels:
+    prometheus: k8s
+  name: k8s
+  namespace: speed-tester
+spec:
+  alerting:
+    alertmanagers:
+    - name: alertmanager-main
+      namespace: speed-tester
+      port: web
+  externalUrl: http://prometheus-speed.192.168.50.208.nip.io
+  image: prom/prometheus:v2.38.0
+  nodeSelector:
+    kubernetes.io/os: linux
+  podMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  replicas: 1
+  resources:
+    requests:
+      memory: 400Mi
+  retention: 365d
+  ruleSelector:
+    matchLabels:
+      prometheus: k8s
+      role: alert-rules
+  scrapeInterval: 1800s
+  scrapeTimeout: 30s
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: prometheus-k8s
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
+  storage:
+    volumeClaimTemplate:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+        storageClassName: longhorn
+        volumeName: ""
+  version: v2.38.0

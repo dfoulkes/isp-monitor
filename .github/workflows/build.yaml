@@ -1,0 +1,52 @@
+name: 'Build Cluster Monitor Project'
+
+# **What it does**: Renders the content of every page and check all internal links.
+# **Why we have it**: To make sure all links connect correctly.
+# **Who does it impact**: Docs content.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '*' 
+  pull_request:
+
+permissions:
+  contents: read
+  # Needed for the 'trilom/file-changes-action' action
+  pull-requests: read
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ fromJSON('["ubuntu-latest", "self-hosted"]')[github.repository == 'github/docs-internal'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: prepare the tool chain 
+        run:  make vendor
+
+      # Creates file "$/files.json", among others
+      - name: Build manifests
+        run:  make
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: home-systems
+          SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+          SLACK_ICON: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png?size=48
+          SLACK_MESSAGE: '${{ steps.extract_branch.outputs.branch }} :rocket: CI Build'
+          SLACK_TITLE:  Build Status ${{ job.status }}
+          SLACK_USERNAME: Github
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}    
